@@ -8,7 +8,8 @@ function App (): JSX.Element {
     <div className="App" >
       <YMaps
         query={{
-          apikey: '1637c085-6a5c-4b3c-9407-d5e3d5993d97'
+          apikey: '1637c085-6a5c-4b3c-9407-d5e3d5993d97',
+          mode: 'debug'
         }}
       >
         <CustomYMap />

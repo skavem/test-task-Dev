@@ -4,7 +4,10 @@ import RouteSliceReducer from './RouteSlice'
 export const store = configureStore({
   reducer: {
     route: RouteSliceReducer
-  }
+  },
+  middleware: (getDefaultMiddleware) => getDefaultMiddleware({
+    serializableCheck: false
+  })
 })
 
 export type RootState = ReturnType<typeof store.getState>
