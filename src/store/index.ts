@@ -1,9 +1,9 @@
-import { configureStore } from "@reduxjs/toolkit";
-
+import { configureStore } from '@reduxjs/toolkit'
+import RouteSliceReducer from './RouteSlice'
 
 export const store = configureStore({
   reducer: {
-
+    route: RouteSliceReducer
   }
 })
 
