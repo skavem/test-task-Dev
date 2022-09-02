@@ -1,8 +1,10 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import { useYMaps } from '@pbe/react-yandex-maps'
 import React, { useEffect } from 'react'
+import toast from 'react-hot-toast'
 import { useAppDispatch, useAppSelector } from '.'
 import { store } from '../store'
-import { changeLastClickCoords, changeRoute } from '../store/RouteActions'
+import { changeLastClickCoords, changeRoute, mapLoaded, mapLoading } from '../store/RouteActions'
 import { mkadKms } from '../utils/constants'
 import {
   findClosestMkadPoint,
@@ -46,20 +48,16 @@ const useYMapWRouteDistance = (
     lmap.geoObjects.add(poly).add(mark).add(line).add(lroute)
 
     void dispatch(changeRoute(lroute))
-    void dispatch(
-      changeLastClickCoords(mark.geometry?.getCoordinates() as number[])
-    )
+    void dispatch(mapLoaded())
 
     lmap.events.add('click', (e) => {
-      void dispatch(
-        changeLastClickCoords(e.get('coords'))
-      )
-
+      if (store.getState().route.mapLoading) return
+      void dispatch(mapLoading())
       const newCoords = e.get('coords')
       const newClosestMkad = findClosestMkadPoint(newCoords, mkadKms[0])
       const map = e.get('map')
 
-      console.log(newCoords)
+      void dispatch(changeLastClickCoords(newCoords))
 
       mark.geometry?.setCoordinates(newCoords)
       line.geometry?.setCoordinates([newCoords, newClosestMkad])
@@ -69,12 +67,32 @@ const useYMapWRouteDistance = (
         map.geoObjects.remove(oldRoute)
       }
 
-      void findFastestYMultiRoute(ymaps, newCoords, mkadKms[0])
-        .then((route) => {
-          if (route === null) return
-          void dispatch(changeRoute(route))
-          map.geoObjects.add(route)
-        })
+      void toast.promise(
+        findFastestYMultiRoute(ymaps, newCoords, mkadKms[0])
+          .then((route) => {
+            if (route === null) return
+            void dispatch(changeRoute(route))
+            map.geoObjects.add(route)
+            void dispatch(mapLoaded())
+            return {
+              distance:
+                route
+                  .getActiveRoute()?.properties
+                  .get('distance', { text: '' }) as { text: string},
+              duration:
+                route
+                  .getActiveRoute()?.properties
+                  .get('duration', { text: '' }) as { text: string}
+            }
+          }),
+        {
+          loading: 'Загружаем...',
+          success: (data) =>
+          `Расстояние: ${data?.distance.text ?? 'Не определено'}, 
+          Длительность: ${data?.duration.text ?? 'Не определено'}`,
+          error: 'Какая-то ошибка :( Перезагрузите страницу'
+        }
+      )
     })
   }, [ymaps])
 }

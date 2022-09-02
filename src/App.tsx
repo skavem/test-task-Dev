@@ -2,6 +2,7 @@ import React from 'react'
 import './App.css'
 import { YMaps } from '@pbe/react-yandex-maps'
 import CustomYMap from './components/CustomYMap'
+import { Toaster } from 'react-hot-toast'
 
 function App (): JSX.Element {
   return (
@@ -13,6 +14,7 @@ function App (): JSX.Element {
         }}
       >
         <CustomYMap />
+        <Toaster />
       </YMaps>
     </div>
   )

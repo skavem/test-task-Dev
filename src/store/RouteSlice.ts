@@ -4,6 +4,7 @@ import { multiRouter } from 'yandex-maps'
 interface IRouteSlice {
   route: null | multiRouter.MultiRoute
   lastClickCoords: number[]
+  mapLoading: boolean
 }
 
 const coordsFromStorage = localStorage.getItem('lastClickCoords')
@@ -14,7 +15,8 @@ const initCoords = coordsFromStorage !== null
 
 const initialState: IRouteSlice = {
   route: null,
-  lastClickCoords: initCoords
+  lastClickCoords: initCoords,
+  mapLoading: true
 }
 
 export const routeSlice = createSlice({
@@ -26,6 +28,9 @@ export const routeSlice = createSlice({
     },
     setLastClickCoords (state, action: PayloadAction<number[]>) {
       state.lastClickCoords = action.payload
+    },
+    setMapLoading (state, action: PayloadAction<boolean>) {
+      state.mapLoading = action.payload
     }
   }
 })

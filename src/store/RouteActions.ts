@@ -14,3 +14,15 @@ export const changeLastClickCoords = (coords: number[]) => {
     dispatch(routeSlice.actions.setLastClickCoords(coords))
   }
 }
+
+export const mapLoading = () => {
+  return async (dispatch: AppDispatch) => {
+    dispatch(routeSlice.actions.setMapLoading(true))
+  }
+}
+
+export const mapLoaded = () => {
+  return async (dispatch: AppDispatch) => {
+    dispatch(routeSlice.actions.setMapLoading(false))
+  }
+}
