@@ -1,16 +1,28 @@
 import { useYMaps } from '@pbe/react-yandex-maps'
-import React, { useEffect, useState } from 'react'
-import { useAppDispatch } from '.'
+import React, { useEffect } from 'react'
+import { useAppDispatch, useAppSelector } from '.'
 import { store } from '../store'
-import { changeRoute } from '../store/RouteActions'
+import { changeLastClickCoords, changeRoute } from '../store/RouteActions'
 import { mkadKms } from '../utils/constants'
-import { findClosestMkadPoint, findFastestRoute } from '../utils/distanceCheckers'
+import {
+  findClosestMkadPoint,
+  findFastestYMultiRoute
+} from '../utils/distanceCheckers'
 
-const useYMapWRouteDistance = (mapRef: React.RefObject<HTMLDivElement>): void => {
+const useYMapWRouteDistance = (
+  mapRef: React.RefObject<HTMLDivElement>,
+  pointCloud: number[][][]
+): void => {
   const dispatch = useAppDispatch()
-  const [curCoords, setCurMark] = useState<number[]>([55.9, 37.9])
+  const initCoords = useAppSelector(state => state.route.lastClickCoords)
 
-  const ymaps = useYMaps(['Map', 'Polygon', 'Placemark', 'Polyline', 'multiRouter.MultiRoute'])
+  const ymaps = useYMaps([
+    'Map',
+    'Polygon',
+    'Placemark',
+    'Polyline',
+    'multiRouter.MultiRoute'
+  ])
 
   useEffect(() => {
     if (ymaps === null || mapRef.current === null) return
@@ -19,30 +31,35 @@ const useYMapWRouteDistance = (mapRef: React.RefObject<HTMLDivElement>): void =>
       zoom: 10
     })
 
-    const poly = new ymaps.Polygon(mkadKms)
-    const mark = new ymaps.Placemark(curCoords, {})
-    const closestMkad = findClosestMkadPoint(curCoords)
-    const line = new ymaps.Polyline([curCoords, closestMkad])
-    const lroute = new ymaps.multiRouter.MultiRoute({
-      referencePoints: [curCoords, closestMkad],
-      params: {}
-    }, {})
+    const poly = new ymaps.Polygon(pointCloud)
+    const mark = new ymaps.Placemark(initCoords, {})
+    const closestMkad = findClosestMkadPoint(initCoords, mkadKms[0])
+    const line = new ymaps.Polyline([initCoords, closestMkad])
+    const lroute = new ymaps.multiRouter.MultiRoute(
+      {
+        referencePoints: [initCoords, closestMkad],
+        params: {}
+      },
+      {}
+    )
     poly.options.set('fillColor', '0066ff99')
-    lmap.geoObjects
-      .add(poly)
-      .add(mark)
-      .add(line)
-      .add(lroute)
+    lmap.geoObjects.add(poly).add(mark).add(line).add(lroute)
 
     void dispatch(changeRoute(lroute))
-    setCurMark(mark.geometry?.getCoordinates() as number[])
+    void dispatch(
+      changeLastClickCoords(mark.geometry?.getCoordinates() as number[])
+    )
 
     lmap.events.add('click', (e) => {
-      setCurMark(e.get('coords'))
+      void dispatch(
+        changeLastClickCoords(e.get('coords'))
+      )
 
       const newCoords = e.get('coords')
-      const newClosestMkad = findClosestMkadPoint(newCoords)
-      const map = mark.getMap()
+      const newClosestMkad = findClosestMkadPoint(newCoords, mkadKms[0])
+      const map = e.get('map')
+
+      console.log(newCoords)
 
       mark.geometry?.setCoordinates(newCoords)
       line.geometry?.setCoordinates([newCoords, newClosestMkad])
@@ -52,11 +69,12 @@ const useYMapWRouteDistance = (mapRef: React.RefObject<HTMLDivElement>): void =>
         map.geoObjects.remove(oldRoute)
       }
 
-      void findFastestRoute(ymaps, newCoords, map).then(route => {
-        if (route === null) return
-        void dispatch(changeRoute(route))
-        map.geoObjects.add(route)
-      })
+      void findFastestYMultiRoute(ymaps, newCoords, mkadKms[0])
+        .then((route) => {
+          if (route === null) return
+          void dispatch(changeRoute(route))
+          map.geoObjects.add(route)
+        })
     })
   }, [ymaps])
 }

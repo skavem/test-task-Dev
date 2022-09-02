@@ -7,3 +7,10 @@ export const changeRoute = (route: multiRouter.MultiRoute) => {
     dispatch(routeSlice.actions.setRoute(route))
   }
 }
+
+export const changeLastClickCoords = (coords: number[]) => {
+  return async (dispatch: AppDispatch) => {
+    localStorage.setItem('lastClickCoords', JSON.stringify(coords))
+    dispatch(routeSlice.actions.setLastClickCoords(coords))
+  }
+}
